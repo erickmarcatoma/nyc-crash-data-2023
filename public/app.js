@@ -24,6 +24,9 @@ async function loadLiveCrashData(borough = 'ALL') {
 
     const factorsData = await response.json();
 
+    // 1. Calculate KPI Values
+    updateKPICards(factorsData);
+
     const labels = factorsData.map(item => item.factor);
     const counts = factorsData.map(item => item.count);
     
@@ -95,4 +98,17 @@ async function loadLiveCrashData(borough = 'ALL') {
       errorElement.textContent = `Could not load data: ${error.message}`;
     }
   }
+}
+
+function updateKPICards(data) {
+  if (!data || data.length === 0) return;
+
+  const totalCrashes = data.reduce((sum, item) => sum + item.count, 0);
+  const topFactor = data[0];
+  const sharePercentage = ((topFactor.count / totalCrashes) * 100).toFixed(1);
+
+  document.getElementById('kpi-total-crashes').textContent = totalCrashes.toLocaleString();
+  document.getElementById('kpi-top-cause').textContent = topFactor.factor;
+  document.getElementById('kpi-top-count').textContent = `${topFactor.count.toLocaleString()} collisions`;
+  document.getElementById('kpi-share').textContent = `${sharePercentage}%`;
 }
