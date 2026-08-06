@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2023 NYC Collision Contributing Factors</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { 
+      box-sizing: border-box; 
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8fafc;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+    h2 {
+      margin: 0 0 0.5rem 0;
+      color: #0f172a;
+      font-size: 1.6rem;
+    }
+    p.subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin: 0 0 2rem 0;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 1rem;
+      border-left: 4px solid #94a3b8;
+    }
+    .stat-card.primary {
+      background: #eff6ff;
+      border-left-color: #2563eb;
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .stat-card.primary .stat-value {
+      color: #2563eb;
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+    .chart-container {
+      position: relative;
+      height: 400px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Driver Distraction Dominates NYC Collisions (2023)</h2>
+    <p class="subtitle">Driver Inattention far surpasses other known factors like alcohol involvement or recorded handheld cell phone use.</p>
+
+    <!-- Top Key Metric Cards -->
+    <div class="stats-grid">
+      <div class="stat-card primary">
+        <div class="stat-value">24,111</div>
+        <div class="stat-label">Driver Inattention / Distraction</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">1,762</div>
+        <div class="stat-label">Alcohol Involvement</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">39</div>
+        <div class="stat-label">Hand-Held Cell Phone Use</div>
+      </div>
+    </div>
+    
+    <!-- Horizontal Bar Chart Container -->
+    <div class="chart-container">
+      <canvas id="factorChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // 2023 NYC Motor Vehicle Collision Dataset Summary
+    const crashData = [
+      { factor: "Driver Inattention/Distraction", count: 24111, highlight: true },
+      { factor: "Failure to Yield Right-of-Way", count: 6598, highlight: false },
+      { factor: "Following Too Closely", count: 6116, highlight: false },
+      { factor: "Unsafe Speed", count: 3796, highlight: false },
+      { factor: "Alcohol Involvement", count: 1762, highlight: false },
+      { factor: "Cell Phone (hand-Held)", count: 39, highlight: false }
+    ];
+
+    const labels = crashData.map(item => item.factor);
+    const values = crashData.map(item => item.count);
+    
+    // Highlight the main distraction bar in deep blue; other categories in gray
+    const backgroundColors = crashData.map(item => 
+      item.highlight ? 'rgba(37, 99, 235, 0.9)' : 'rgba(148, 163, 184, 0.6)'
+    );
+    const borderColors = crashData.map(item => 
+      item.highlight ? 'rgba(29, 78, 216, 1)' : 'rgba(100, 116, 139, 1)'
+    );
+
+    const ctx = document.getElementById('factorChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Collisions in 2023',
+          data: values,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y', // Renders horizontal bar chart
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return ` ${context.raw.toLocaleString()} Collisions`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: '#f1f5f9' },
+            ticks: { color: '#64748b' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { 
+              color: '#334155', 
+              font: { weight: '600' } 
+            }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
