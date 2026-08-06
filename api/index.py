@@ -1,56 +1,88 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import json
+from urllib.parse import quote
+from urllib.request import Request, urlopen
+from flask import Flask, jsonify
+from flask_cors import CORS
 
-# Load dataset
-df = pd.read_csv('Motor_Vehicle_Collisions_-_Crashes_20260805.csv', low_memory=False)
-df.columns = df.columns.str.strip()
+app = Flask(__name__)
+CORS(app)
 
-# Filter for 2023 crash data
-df['CRASH DATE'] = pd.to_datetime(df['CRASH DATE'], errors='coerce')
-df_2023 = df[df['CRASH DATE'].dt.year == 2023].copy()
+NYC_OPEN_DATA_ENDPOINT = "https://data.cityofnewyork.us/api/v3/views/h9gi-nx95/query.json"
 
-# Selected contributing factors for direct comparison
-target_factors = [
-    'Driver Inattention/Distraction',
-    'Failure to Yield Right-of-Way',
-    'Following Too Closely',
-    'Unsafe Speed',
-    'Alcohol Involvement',
-    'Cell Phone (hand-Held)'
-]
+def fetch_live_nyc_crash_data():
+    """Queries NYC Open Data SODA API for 2023 collision factor aggregates."""
+    soql_query = (
+        "SELECT contributing_factor_vehicle_1, COUNT(*) as count "
+        "WHERE crash_date >= '2023-01-01T00:00:00' AND crash_date <= '2023-12-31T23:59:59' "
+        "AND contributing_factor_vehicle_1 IS NOT NULL "
+        "AND contributing_factor_vehicle_1 != 'Unspecified' "
+        "GROUP BY contributing_factor_vehicle_1 "
+        "ORDER BY count DESC "
+        "LIMIT 10"
+    )
 
-# Calculate crash counts per factor
-factor_counts = df_2023['CONTRIBUTING FACTOR VEHICLE 1'].value_counts()
-comparison_df = pd.DataFrame({
-    'Factor': target_factors,
-    'Count': [factor_counts.get(f, 0) for f in target_factors]
-})
+    url = f"{NYC_OPEN_DATA_ENDPOINT}?query={quote(soql_query)}"
 
-# Create plot canvas
-plt.figure(figsize=(10, 5))
+    req = Request(
+        url,
+        headers={
+            "Accept": "application/json",
+            "User-Agent": "NYC-Crash-Data-App/1.0"
+        }
+    )
 
-# Highlight 'Driver Inattention/Distraction' in bright blue and others in gray
-colors = ['#2563eb' if f == 'Driver Inattention/Distraction' else '#94a3b8' for f in comparison_df['Factor']]
+    with urlopen(req, timeout=10) as response:
+        if response.status == 200:
+            raw_data = json.loads(response.read().decode('utf-8'))
+            return parse_socrata_response(raw_data)
+        raise Exception(f"NYC Open Data returned HTTP {response.status}")
 
-# Plot horizontal bar chart
-ax = sns.barplot(data=comparison_df, x='Count', y='Factor', palette=colors)
+def parse_socrata_response(data):
+    """Formats Socrata API response into structured chart format."""
+    results = []
+    rows = data if isinstance(data, list) else data.get('rows', [])
 
-# Add exact count numbers next to each bar
-for p in ax.patches:
-    width = p.get_width()
-    ax.annotate(f'{int(width):,}',
-                (width + 300, p.get_y() + p.get_height() / 2.),
-                ha='left', va='center',
-                fontsize=10, fontweight='bold', color='#1e293b')
+    for row in rows:
+        if isinstance(row, dict):
+            factor = row.get('contributing_factor_vehicle_1', 'Unknown').title()
+            count = int(row.get('count', 0))
+        elif isinstance(row, list) and len(row) >= 2:
+            factor = str(row[0]).title()
+            count = int(row[1])
+        else:
+            continue
 
-# Formatting labels and titles
-plt.title('2023 NYC Collisions: Driver Inattention vs. Other Contributing Factors', fontsize=12, fontweight='bold', pad=15)
-plt.xlabel('Number of Collisions', fontsize=10)
-plt.ylabel('', fontsize=10)
-plt.xlim(0, 28000)
-plt.tight_layout()
+        results.append({
+            "factor": factor,
+            "count": count,
+            "highlight": "Driver Inattention" in factor
+        })
 
-# Save image and render
-plt.savefig('contributing_factors_comparison.png', dpi=300)
-plt.show()
+    return results
+
+@app.route('/api/factors', methods=['GET'])
+def get_contributing_factors():
+    try:
+        live_data = fetch_live_nyc_crash_data()
+        if live_data:
+            return jsonify(live_data)
+    except Exception as err:
+        print(f"Fallback activated due to API error: {err}")
+
+    # Fallback array if NYC API is offline or slow
+    fallback_factors = [
+        {"factor": "Driver Inattention/Distraction", "count": 24111, "highlight": True},
+        {"factor": "Failure to Yield Right-of-Way", "count": 6598, "highlight": False},
+        {"factor": "Following Too Closely", "count": 6116, "highlight": False},
+        {"factor": "Unsafe Speed", "count": 3796, "highlight": False},
+        {"factor": "Alcohol Involvement", "count": 1762, "highlight": False},
+        {"factor": "Cell Phone (Hand-Held)", "count": 39, "highlight": False}
+    ]
+    return jsonify(fallback_factors)
+
+# Serverless entry point exports
+application = app
+handler = app
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
