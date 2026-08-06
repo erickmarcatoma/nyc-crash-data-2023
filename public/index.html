@@ -32,15 +32,42 @@
       font-size: 0.95rem;
       margin-bottom: 1.5rem;
     }
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      background-color: #f1f5f9;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    select {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+      color: #1e293b;
+      cursor: pointer;
+      outline: none;
+    }
+    select:focus {
+      border-color: #3b82f6;
+    }
     .legend-box {
       display: flex;
       align-items: center;
       gap: 1.5rem;
-      background-color: #f1f5f9;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
       font-size: 0.875rem;
-      margin-bottom: 1.5rem;
     }
     .legend-item {
       display: flex;
@@ -57,6 +84,7 @@
     .badge-secondary { background-color: rgba(59, 130, 246, 0.75); }
     .chart-box {
       position: relative;
+      min-height: 400px;
     }
     .footnote {
       margin-top: 1.5rem;
@@ -80,15 +108,29 @@
     
     <div id="error-msg"></div>
 
-    <!-- Visual Legend for Color Context -->
-    <div class="legend-box">
-      <div class="legend-item">
-        <span class="badge badge-primary"></span>
-        <span>#1 Leading Cause</span>
+    <!-- Filter & Legend Bar -->
+    <div class="controls-bar">
+      <div class="filter-group">
+        <label for="borough-select">Filter by Borough:</label>
+        <select id="borough-select">
+          <option value="ALL">All NYC</option>
+          <option value="MANHATTAN">Manhattan</option>
+          <option value="BROOKLYN">Brooklyn</option>
+          <option value="QUEENS">Queens</option>
+          <option value="BRONX">Bronx</option>
+          <option value="STATEN ISLAND">Staten Island</option>
+        </select>
       </div>
-      <div class="legend-item">
-        <span class="badge badge-secondary"></span>
-        <span>Other Leading Factors</span>
+
+      <div class="legend-box">
+        <div class="legend-item">
+          <span class="badge badge-primary"></span>
+          <span>#1 Cause</span>
+        </div>
+        <div class="legend-item">
+          <span class="badge badge-secondary"></span>
+          <span>Other Factors</span>
+        </div>
       </div>
     </div>
     

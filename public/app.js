@@ -1,12 +1,23 @@
+let chartInstance = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-  loadLiveCrashData();
+  const boroughSelect = document.getElementById('borough-select');
+  
+  // Initial load for All NYC
+  loadLiveCrashData('ALL');
+
+  // Reload data when user changes borough
+  boroughSelect.addEventListener('change', (event) => {
+    loadLiveCrashData(event.target.value);
+  });
 });
 
-async function loadLiveCrashData() {
+async function loadLiveCrashData(borough = 'ALL') {
   const errorElement = document.getElementById('error-msg');
-  
+  if (errorElement) errorElement.style.display = 'none';
+
   try {
-    const response = await fetch('/api/factors');
+    const response = await fetch(`/api/factors?borough=${encodeURIComponent(borough)}`);
     if (!response.ok) {
       throw new Error(`HTTP Error: ${response.status}`);
     }
@@ -16,14 +27,19 @@ async function loadLiveCrashData() {
     const labels = factorsData.map(item => item.factor);
     const counts = factorsData.map(item => item.count);
     
-    // Highlight top leading cause in red, rest in blue
+    // Top factor red, others blue
     const backgroundColors = factorsData.map(item => 
       item.highlight ? 'rgba(239, 68, 68, 0.85)' : 'rgba(59, 130, 246, 0.75)'
     );
 
     const ctx = document.getElementById('crashChart').getContext('2d');
     
-    new Chart(ctx, {
+    // Destroy previous chart instance before re-creating
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: labels,
@@ -38,6 +54,7 @@ async function loadLiveCrashData() {
       options: {
         indexAxis: 'y',
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
           tooltip: {
