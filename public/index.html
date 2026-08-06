@@ -17,34 +17,86 @@
       max-width: 900px;
       margin: 0 auto;
       background: #ffffff;
-      padding: 2rem;
+      padding: 2.5rem;
       border-radius: 12px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     h1 {
       margin-top: 0;
+      margin-bottom: 0.5rem;
       font-size: 1.75rem;
+      color: #0f172a;
     }
+    .subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+    .legend-box {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background-color: #f1f5f9;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .badge-primary { background-color: rgba(239, 68, 68, 0.85); }
+    .badge-secondary { background-color: rgba(59, 130, 246, 0.75); }
     .chart-box {
       position: relative;
+    }
+    .footnote {
       margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
     }
     #error-msg {
       color: #ef4444;
       display: none;
+      padding: 1rem;
+      background: #fef2f2;
+      border-radius: 6px;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>2023 NYC Motor Vehicle Collisions: Primary Contributing Factors</h1>
-    <p>Live aggregates queried directly from NYC Open Data (SODA API).</p>
+    <h1>Top 10 Primary Contributing Factors in 2023 NYC Collisions</h1>
+    <p class="subtitle">Live aggregates queried directly from NYC Open Data (SODA API).</p>
     
     <div id="error-msg"></div>
+
+    <!-- Visual Legend for Color Context -->
+    <div class="legend-box">
+      <div class="legend-item">
+        <span class="badge badge-primary"></span>
+        <span>#1 Leading Cause</span>
+      </div>
+      <div class="legend-item">
+        <span class="badge badge-secondary"></span>
+        <span>Other Leading Factors</span>
+      </div>
+    </div>
     
     <div class="chart-box">
       <canvas id="crashChart"></canvas>
     </div>
+
+    <p class="footnote">* Excludes NYPD crash entries where the factor was marked as "Unspecified".</p>
   </div>
 
   <script src="app.js"></script>

@@ -16,7 +16,7 @@ async function loadLiveCrashData() {
     const labels = factorsData.map(item => item.factor);
     const counts = factorsData.map(item => item.count);
     
-    // Highlight 'Driver Inattention' bar red, others blue
+    // Highlight top leading cause in red, rest in blue
     const backgroundColors = factorsData.map(item => 
       item.highlight ? 'rgba(239, 68, 68, 0.85)' : 'rgba(59, 130, 246, 0.75)'
     );
@@ -42,15 +42,29 @@ async function loadLiveCrashData() {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (context) => ` ${context.raw.toLocaleString()} collisions`
+              label: (context) => ` ${context.raw.toLocaleString()} reported collisions`
             }
           }
         },
         scales: {
           x: { 
             beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Number of Reported Collisions',
+              font: { weight: 'bold', size: 12 },
+              color: '#475569'
+            },
             ticks: {
               callback: (value) => value.toLocaleString()
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Contributing Factor',
+              font: { weight: 'bold', size: 12 },
+              color: '#475569'
             }
           }
         }
