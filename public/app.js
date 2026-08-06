@@ -1,10 +1,12 @@
+// Register Chart.js DataLabels plugin globally
+Chart.register(ChartDataLabels);
+
 let chartInstance = null;
 let mapInstance = null;
 let mapMarkersLayer = null;
 
-let currentViewMode = 'chart'; // 'chart' or 'map'
+let currentViewMode = 'chart';
 
-// Approximate Borough Map Centers [lat, lng, zoom]
 const BOROUGH_CENTERS = {
   'ALL': [40.7128, -74.0060, 11],
   'MANHATTAN': [40.7831, -73.9712, 12],
@@ -18,11 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const boroughSelect = document.getElementById('borough-select');
   const btnChartView = document.getElementById('btn-chart-view');
   const btnMapView = document.getElementById('btn-map-view');
+  const legendBox = document.getElementById('legend-box');
 
-  // Initial load
   loadLiveCrashData('ALL');
 
-  // Borough Filter Change
   boroughSelect.addEventListener('change', (e) => {
     const selectedBorough = e.target.value;
     loadLiveCrashData(selectedBorough);
@@ -31,13 +32,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // View Switchers
   btnChartView.addEventListener('click', () => {
     currentViewMode = 'chart';
     btnChartView.classList.add('active');
     btnMapView.classList.remove('active');
     document.getElementById('chartView').style.display = 'block';
     document.getElementById('mapView').style.display = 'none';
+
+    legendBox.innerHTML = `
+      <div class="legend-item"><span class="badge badge-primary"></span><span>#1 Cause</span></div>
+      <div class="legend-item"><span class="badge badge-secondary"></span><span>Other Causes</span></div>
+    `;
   });
 
   btnMapView.addEventListener('click', () => {
@@ -46,8 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btnChartView.classList.remove('active');
     document.getElementById('chartView').style.display = 'none';
     document.getElementById('mapView').style.display = 'block';
-    
-    // Initialize map if first time, then load points
+
+    legendBox.innerHTML = `
+      <div class="legend-item"><span class="badge badge-map"></span><span>Crash Incident Point</span></div>
+    `;
+
     const selectedBorough = boroughSelect.value;
     initMapIfNeeded();
     loadMapPoints(selectedBorough);
@@ -77,7 +85,7 @@ async function loadLiveCrashData(borough = 'ALL') {
     chartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: labels, // Causes displayed cleanly on the Left (Y-Axis)
         datasets: [{
           label: 'Total Collisions',
           data: counts,
@@ -90,9 +98,26 @@ async function loadLiveCrashData(borough = 'ALL') {
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            right: 45 // Extra spacing on right so numbers aren't cut off
+          }
+        },
         animation: { duration: 600, easing: 'easeOutQuart' },
         plugins: {
           legend: { display: false },
+          // Numbers displayed right on the end of each bar
+          datalabels: {
+            anchor: 'end',
+            align: 'end',
+            offset: 4,
+            color: '#334155',
+            font: {
+              weight: 'bold',
+              size: 11
+            },
+            formatter: (value) => value.toLocaleString()
+          },
           tooltip: {
             backgroundColor: '#0f172a',
             callbacks: {
@@ -101,8 +126,29 @@ async function loadLiveCrashData(borough = 'ALL') {
           }
         },
         scales: {
-          x: { beginAtZero: true, ticks: { callback: (val) => val.toLocaleString() } },
-          y: { grid: { display: false } }
+          x: { 
+            beginAtZero: true, 
+            ticks: { callback: (val) => val.toLocaleString() },
+            title: {
+              display: true,
+              text: 'Number of Reported Collisions',
+              font: { weight: '600', size: 12 },
+              color: '#64748b'
+            }
+          },
+          y: { 
+            grid: { display: false },
+            ticks: {
+              color: '#1e293b',
+              font: { weight: '600', size: 12 }
+            },
+            title: {
+              display: true,
+              text: 'Contributing Factors (Left Side)',
+              font: { weight: '600', size: 12 },
+              color: '#64748b'
+            }
+          }
         }
       }
     });
@@ -118,7 +164,6 @@ async function loadLiveCrashData(borough = 'ALL') {
 
 function initMapIfNeeded() {
   if (!mapInstance) {
-    // OpenStreetMap tiles
     mapInstance = L.map('mapView').setView([40.7128, -74.0060], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
@@ -127,7 +172,6 @@ function initMapIfNeeded() {
 
     mapMarkersLayer = L.layerGroup().addTo(mapInstance);
   }
-  // Invalidate size to ensure full container rendering after CSS display change
   setTimeout(() => mapInstance.invalidateSize(), 100);
 }
 
@@ -141,7 +185,6 @@ async function loadMapPoints(borough = 'ALL') {
     const points = await response.json();
     mapMarkersLayer.clearLayers();
 
-    // Center map to selected borough
     const centerConfig = BOROUGH_CENTERS[borough.toUpperCase()] || BOROUGH_CENTERS['ALL'];
     mapInstance.setView([centerConfig[0], centerConfig[1]], centerConfig[2]);
 
