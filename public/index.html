@@ -4,7 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NYC Collision Analytics 2023</title>
+  
+  <!-- Chart.js & Leaflet CSS/JS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     :root {
       --bg-main: #f1f5f9;
@@ -18,9 +23,7 @@
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -55,13 +58,8 @@
       color: var(--text-main);
     }
 
-    .subtitle {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      margin: 0;
-    }
+    .subtitle { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
 
-    /* KPI Summary Cards */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -77,34 +75,12 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .kpi-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
-    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .kpi-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .kpi-value { font-size: 1.65rem; font-weight: 800; color: var(--text-main); line-height: 1.2; }
+    .kpi-subtext { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem; }
 
-    .kpi-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
-    }
-
-    .kpi-value {
-      font-size: 1.65rem;
-      font-weight: 800;
-      color: var(--text-main);
-      line-height: 1.2;
-    }
-
-    .kpi-subtext {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 0.35rem;
-    }
-
-    /* Filter & Controls Toolbar */
+    /* View Switcher Bar */
     .controls-bar {
       display: flex;
       flex-wrap: wrap;
@@ -118,13 +94,7 @@
       margin-bottom: 1.75rem;
     }
 
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
+    .filter-group { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; font-weight: 600; }
 
     select {
       padding: 0.5rem 1rem;
@@ -136,44 +106,37 @@
       color: var(--text-main);
       cursor: pointer;
       outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    select:focus, select:hover {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-
-    .legend-box {
+    .view-toggle {
       display: flex;
-      align-items: center;
-      gap: 1.25rem;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .toggle-btn {
+      border: none;
+      background: transparent;
+      padding: 0.4rem 0.85rem;
       font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
     }
 
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    .toggle-btn.active {
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
     }
 
-    .badge {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      display: inline-block;
-    }
-
-    .badge-primary { background-color: rgba(239, 68, 68, 0.85); }
-    .badge-secondary { background-color: rgba(59, 130, 246, 0.75); }
-
-    .chart-box {
-      position: relative;
-      height: 420px;
-      width: 100%;
-    }
-
+    /* Views */
+    .view-container { position: relative; height: 420px; width: 100%; }
+    #mapView { height: 100%; width: 100%; border-radius: 12px; display: none; }
+    
     .footnote {
       margin-top: 1.75rem;
       padding-top: 1rem;
@@ -187,14 +150,7 @@
       gap: 0.5rem;
     }
 
-    .footnote a {
-      color: var(--accent-blue);
-      text-decoration: none;
-    }
-
-    .footnote a:hover {
-      text-decoration: underline;
-    }
+    .footnote a { color: var(--accent-blue); text-decoration: none; }
 
     #error-msg {
       color: #b91c1c;
@@ -236,7 +192,7 @@
       </div>
     </div>
 
-    <!-- Filter & Legend Bar -->
+    <!-- Controls Bar -->
     <div class="controls-bar">
       <div class="filter-group">
         <label for="borough-select">Filter Borough:</label>
@@ -250,20 +206,18 @@
         </select>
       </div>
 
-      <div class="legend-box">
-        <div class="legend-item">
-          <span class="badge badge-primary"></span>
-          <span>#1 Leading Cause</span>
-        </div>
-        <div class="legend-item">
-          <span class="badge badge-secondary"></span>
-          <span>Other Top Causes</span>
-        </div>
+      <div class="view-toggle">
+        <button class="toggle-btn active" id="btn-chart-view">Bar Chart</button>
+        <button class="toggle-btn" id="btn-map-view">Spatial Map</button>
       </div>
     </div>
     
-    <div class="chart-box">
-      <canvas id="crashChart"></canvas>
+    <!-- Views -->
+    <div class="view-container">
+      <div id="chartView" style="height: 100%; width: 100%;">
+        <canvas id="crashChart"></canvas>
+      </div>
+      <div id="mapView"></div>
     </div>
 
     <div class="footnote">
