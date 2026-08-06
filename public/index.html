@@ -3,159 +3,234 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NYC Crash Data 2023</title>
+  <title>NYC Collision Analytics 2023</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 2rem;
-      background-color: #f8fafc;
-      color: #1e293b;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-      margin-top: 0;
-      margin-bottom: 0.5rem;
-      font-size: 1.75rem;
-      color: #0f172a;
-    }
-    .subtitle {
-      color: #64748b;
-      font-size: 0.95rem;
-      margin-bottom: 1.5rem;
+    :root {
+      --bg-main: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
     }
 
-    /* KPI Cards Styling */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 2.5rem 1rem;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .header-group {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    /* KPI Summary Cards */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .kpi-card {
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 1.25rem;
-    }
-    .kpi-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      margin-bottom: 0.5rem;
-    }
-    .kpi-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #0f172a;
-      line-height: 1.2;
-    }
-    .kpi-subtext {
-      font-size: 0.8rem;
-      color: #64748b;
-      margin-top: 0.25rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
     }
 
+    .kpi-card {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .kpi-subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    /* Filter & Controls Toolbar */
     .controls-bar {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       gap: 1rem;
-      background-color: #f1f5f9;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1.75rem;
     }
+
     .filter-group {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
       font-size: 0.9rem;
       font-weight: 600;
     }
+
     select {
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem 1rem;
       font-size: 0.9rem;
-      border-radius: 6px;
+      font-weight: 500;
+      border-radius: 8px;
       border: 1px solid #cbd5e1;
       background-color: #ffffff;
-      color: #1e293b;
+      color: var(--text-main);
       cursor: pointer;
       outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    select:focus {
-      border-color: #3b82f6;
+
+    select:focus, select:hover {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
+
     .legend-box {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      font-size: 0.875rem;
+      gap: 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 500;
     }
+
     .legend-item {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
+
     .badge {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       border-radius: 3px;
       display: inline-block;
     }
+
     .badge-primary { background-color: rgba(239, 68, 68, 0.85); }
     .badge-secondary { background-color: rgba(59, 130, 246, 0.75); }
+
     .chart-box {
       position: relative;
-      min-height: 400px;
+      height: 420px;
+      width: 100%;
     }
+
     .footnote {
-      margin-top: 1.5rem;
+      margin-top: 1.75rem;
+      padding-top: 1rem;
+      border-top: 1px dotted var(--border-color);
       font-size: 0.8rem;
       color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
+
+    .footnote a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+
+    .footnote a:hover {
+      text-decoration: underline;
+    }
+
     #error-msg {
-      color: #ef4444;
+      color: #b91c1c;
       display: none;
       padding: 1rem;
       background: #fef2f2;
-      border-radius: 6px;
-      margin-bottom: 1rem;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Top 10 Primary Contributing Factors in 2023 NYC Collisions</h1>
-    <p class="subtitle">Live aggregates queried directly from NYC Open Data (SODA API).</p>
+    <div class="header-group">
+      <h1>2023 NYC Collision Analytics</h1>
+      <p class="subtitle">Live analysis of motor vehicle collision factors powered by NYC Open Data (SODA API).</p>
+    </div>
     
     <div id="error-msg"></div>
 
-    <!-- KPI Summary Section -->
+    <!-- KPI Summary Cards -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-title">Top 10 Factors Total</div>
+        <div class="kpi-title">Top 10 Factors Volume</div>
         <div class="kpi-value" id="kpi-total-crashes">--</div>
         <div class="kpi-subtext">Reported Collisions</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">#1 Primary Cause</div>
-        <div class="kpi-value" id="kpi-top-cause" style="font-size: 1.15rem; color: #ef4444;">--</div>
+        <div class="kpi-title">Leading Cause</div>
+        <div class="kpi-value" id="kpi-top-cause" style="font-size: 1.15rem; color: var(--accent-red);">--</div>
         <div class="kpi-subtext" id="kpi-top-count">-- collisions</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-title">Top Cause Share</div>
+        <div class="kpi-title">Primary Cause Share</div>
         <div class="kpi-value" id="kpi-share">--%</div>
         <div class="kpi-subtext">Of Top 10 Total</div>
       </div>
@@ -164,9 +239,9 @@
     <!-- Filter & Legend Bar -->
     <div class="controls-bar">
       <div class="filter-group">
-        <label for="borough-select">Filter by Borough:</label>
+        <label for="borough-select">Filter Borough:</label>
         <select id="borough-select">
-          <option value="ALL">All NYC</option>
+          <option value="ALL">All NYC Boroughs</option>
           <option value="MANHATTAN">Manhattan</option>
           <option value="BROOKLYN">Brooklyn</option>
           <option value="QUEENS">Queens</option>
@@ -178,11 +253,11 @@
       <div class="legend-box">
         <div class="legend-item">
           <span class="badge badge-primary"></span>
-          <span>#1 Cause</span>
+          <span>#1 Leading Cause</span>
         </div>
         <div class="legend-item">
           <span class="badge badge-secondary"></span>
-          <span>Other Factors</span>
+          <span>Other Top Causes</span>
         </div>
       </div>
     </div>
@@ -191,7 +266,10 @@
       <canvas id="crashChart"></canvas>
     </div>
 
-    <p class="footnote">* Excludes NYPD crash entries where the factor was marked as "Unspecified".</p>
+    <div class="footnote">
+      <span>* Excludes NYPD collision entries marked as "Unspecified".</span>
+      <span>Data Source: <a href="https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Crashes/h9gi-nx95" target="_blank" rel="noopener">NYC Open Data</a></span>
+    </div>
   </div>
 
   <script src="app.js"></script>

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial load for All NYC
   loadLiveCrashData('ALL');
 
-  // Reload data when user changes borough
+  // Reload data when user changes borough dropdown
   boroughSelect.addEventListener('change', (event) => {
     loadLiveCrashData(event.target.value);
   });
@@ -24,20 +24,20 @@ async function loadLiveCrashData(borough = 'ALL') {
 
     const factorsData = await response.json();
 
-    // 1. Calculate KPI Values
+    // 1. Calculate and display KPI Summary Values
     updateKPICards(factorsData);
 
     const labels = factorsData.map(item => item.factor);
     const counts = factorsData.map(item => item.count);
     
-    // Top factor red, others blue
+    // Highlight top rank in red, remaining bars in blue
     const backgroundColors = factorsData.map(item => 
-      item.highlight ? 'rgba(239, 68, 68, 0.85)' : 'rgba(59, 130, 246, 0.75)'
+      item.highlight ? 'rgba(239, 68, 68, 0.88)' : 'rgba(59, 130, 246, 0.80)'
     );
 
     const ctx = document.getElementById('crashChart').getContext('2d');
     
-    // Destroy previous chart instance before re-creating
+    // Destroy previous instance before redrawing
     if (chartInstance) {
       chartInstance.destroy();
     }
@@ -50,17 +50,26 @@ async function loadLiveCrashData(borough = 'ALL') {
           label: 'Total Collisions',
           data: counts,
           backgroundColor: backgroundColors,
-          borderWidth: 1,
-          borderRadius: 4
+          borderWidth: 0,
+          borderRadius: 6
         }]
       },
       options: {
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 600,
+          easing: 'easeOutQuart'
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
+            backgroundColor: '#0f172a',
+            titleFont: { size: 13, weight: 'bold' },
+            bodyFont: { size: 12 },
+            padding: 10,
+            displayColors: false,
             callbacks: {
               label: (context) => ` ${context.raw.toLocaleString()} reported collisions`
             }
@@ -69,22 +78,33 @@ async function loadLiveCrashData(borough = 'ALL') {
         scales: {
           x: { 
             beginAtZero: true,
+            grid: {
+              color: '#f1f5f9'
+            },
             title: {
               display: true,
               text: 'Number of Reported Collisions',
-              font: { weight: 'bold', size: 12 },
-              color: '#475569'
+              font: { weight: '600', size: 12 },
+              color: '#64748b'
             },
             ticks: {
+              color: '#64748b',
               callback: (value) => value.toLocaleString()
             }
           },
           y: {
+            grid: {
+              display: false
+            },
             title: {
               display: true,
               text: 'Contributing Factor',
-              font: { weight: 'bold', size: 12 },
-              color: '#475569'
+              font: { weight: '600', size: 12 },
+              color: '#64748b'
+            },
+            ticks: {
+              color: '#334155',
+              font: { weight: '500' }
             }
           }
         }
@@ -95,7 +115,7 @@ async function loadLiveCrashData(borough = 'ALL') {
     console.error('Error rendering chart:', error);
     if (errorElement) {
       errorElement.style.display = 'block';
-      errorElement.textContent = `Could not load data: ${error.message}`;
+      errorElement.textContent = `Could not load live data: ${error.message}`;
     }
   }
 }
